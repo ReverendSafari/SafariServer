@@ -1,4 +1,5 @@
-Welcome to Safari Server, In an attempts to familiarize myself with HTTP, and various web protocals I am gonna try to build a simple web server!
+My attempt to learn more about TCP/IP protocals and webservers
+I did some prelimanary reading on TCP/UDP and basic HTTP stuff
 
-.......
-More to come
+CURRENT GOAL:
+Write a simple TCP web server that can recieve data, and echo it back to the client.
