@@ -1,5 +1,14 @@
 My attempt to learn more about TCP/IP protocals and webservers
-I did some prelimanary reading on TCP/UDP and basic HTTP stuff
+
+GOALS: Originally I just wanted to get a simple TCP echo server working which I have achieved!
+       Currently I am looking to add more rigarous testing, as well as branching off the repo.
+
+       Ideas I am currently thinking of persuing:
+        simple chat functionality? 
+        basic logging
+        basic custom commands
+        some kind of auth 
+
 
 # Simple TCP Echo Server
 

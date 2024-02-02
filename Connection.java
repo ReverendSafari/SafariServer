@@ -1,7 +1,9 @@
 import java.io.*;
 import java.net.Socket;
 import java.net.ServerSocket;
-
+import java.util.Collections;
+import java.util.List;
+import java.util.ArrayList;
 
 
 /**
@@ -16,7 +18,7 @@ public class Connection {
     public static void main(String[] args) throws IOException {
         
         //Create ServerSocket to listen to a given port 
-        int port = 6789;
+        int port = 6969;
         ServerSocket serverSocket = new ServerSocket(port);
         System.out.println("The server is listening to PORT " + port);
 
@@ -62,15 +64,23 @@ class HandleConnection implements Runnable {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             //PrintWriter translates our return data for the OutputStream
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
+            
+            //Prompt and read a username from client
+            out.print("Please enter a username: ");
+            out.flush();
+            String username = in.readLine().trim();
+            
+            //Create new Client object
+            Client tempClient = new Client(out, username);
 
+            //Add a new client object to our sync list 
+            ChatManager.addSocket(tempClient);
             //Current Line taken from input stream
             String inputLine;
             //While their is data left (Inputline isn't null)
             while ((inputLine = in.readLine()) != null) {
-                //Print to console 
-                System.out.println("RECEIVED: " + inputLine);
-                //Send to the output stream for the client to recieve
-                out.println(inputLine);
+                System.out.println("RECIEVED MESSAGE: " + inputLine);
+                ChatManager.broadcastMsg(inputLine, tempClient);
             }
         //Catch IO error if there is a problem intializing the readers
         } catch (IOException e) {
@@ -79,6 +89,7 @@ class HandleConnection implements Runnable {
         } finally {
             try {
                 clientSocket.close();
+                
             //Print the IO error if we can't close it
             } catch (IOException e) {
                 System.out.println("Error closing client socket: " + e.getMessage());
@@ -87,4 +98,65 @@ class HandleConnection implements Runnable {
     }   
 }
 
+class ChatManager {
+    //Our THREADSAFE list to be populated with connected clientSockets
+    private static final List<Client> clientList = Collections.synchronizedList(new ArrayList<>());
 
+    public static void addSocket(Client c) {
+        //Synchronizing on our list so the modifications are made in ALL threads
+        synchronized (clientList) {
+            clientList.add(c);
+        }
+    }
+
+    public static void removeSocket(Client c) {
+        //Synchronizing on our list so the modifications are made in ALL threads
+        synchronized (clientList) {
+            clientList.remove(c);
+        }
+    }
+
+    public static void broadcastMsg(String msg, Client sender) {
+        //Sync on our list
+        synchronized (clientList) {
+            //Cycle through and send our message to all client sockets in the list
+            for (Client c : clientList) {
+                if (c != sender) {
+                    c.getWriter().println(c.getUsername() + ": " + msg);
+                }
+            }
+        }
+    }
+
+}
+
+
+class Client {
+    private String username = "default";
+    private PrintWriter associatedPrintWriter;    
+
+    public Client(PrintWriter p) {
+        this.associatedPrintWriter = p;
+    }
+    
+    public Client(PrintWriter p, String username) {
+        this.associatedPrintWriter = p;
+        this.username = username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getUsername() {
+        return this.username;
+    }
+
+    public void setWriter(PrintWriter p) {
+        associatedPrintWriter = p;
+    }
+
+    public PrintWriter getWriter() {
+        return this.associatedPrintWriter;
+    }
+}
